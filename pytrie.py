@@ -20,7 +20,7 @@ Usage
 SortedStringTrie({'all': 2, 'allot': 3, 'alloy': 4, 'aloe': 5, 'an': 0, 'ant': 1, 'are': 6, 'be': 7})
 >>> t.keys(prefix='al')
 ['all', 'allot', 'alloy', 'aloe']
->>> t.items(prefix='an')
+>>> list(t.items(prefix='an'))
 [('an', 0), ('ant', 1)]
 >>> t.longest_prefix('antonym')
 'ant'
@@ -116,7 +116,10 @@ class Trie(DictMixin, object):
         Parameters are the same with ``dict()``.
         '''
         self._root = self.NodeFactory()
-        self.update(seq, **kwargs)
+        if seq is None:
+            self.update(**kwargs)
+        else:
+            self.update(seq, **kwargs)
 
     @classmethod
     def fromkeys(cls, iterable, value=None):
@@ -255,7 +258,7 @@ class Trie(DictMixin, object):
         :param prefix: If not None, return only the values associated with keys
             prefixed by ``prefix``.
         '''
-        return list(self.itervalues(prefix))
+        return list(self.values(prefix))
 
     def items(self, prefix=None):
         '''Return a list of this trie's items (``(key,value)`` tuples).
@@ -263,16 +266,16 @@ class Trie(DictMixin, object):
         :param prefix: If not None, return only the items associated with keys
             prefixed by ``prefix``.
         '''
-        return list(self.iteritems(prefix))
+        return list(self.items(prefix))
 
     def iterkeys(self, prefix=None):
         '''Return an iterator over this trie's keys.
 
         :param prefix: If not None, yield only the keys prefixed by ``prefix``.
         '''
-        return (key for key,value in self.iteritems(prefix))
+        return (key for key,value in self.items(prefix))
 
-    def itervalues(self, prefix=None):
+    def values(self, prefix=None):
         '''Return an iterator over this trie's values.
 
         :param prefix: If not None, yield only the values associated with keys
@@ -292,7 +295,7 @@ class Trie(DictMixin, object):
                 node = self.NodeFactory()
         return generator(node)
 
-    def iteritems(self, prefix=None):
+    def items(self, prefix=None):
         '''Return an iterator over this trie's items (``(key,value)`` tuples).
 
         :param prefix: If not None, yield only the items associated with keys
@@ -395,11 +398,11 @@ class StringTrie(Trie):
     KeyFactory = ''.join
 
 
-# XXX: quick & dirty sorted dict; currently only iteritems() has to be overriden.
+# XXX: quick & dirty sorted dict; currently only items() has to be overriden.
 # However this is implementation detail that may change in the future
 class _SortedDict(dict):
-    def iteritems(self):
-        return sorted(dict.iteritems(self), key=itemgetter(0))
+    def items(self):
+        return sorted(dict.items(self), key=itemgetter(0))
 
 
 class _SortedNode(Node):
