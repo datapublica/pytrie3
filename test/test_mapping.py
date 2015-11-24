@@ -6,7 +6,11 @@ plus a few more extra tests.
 
 import sys
 import unittest
-import UserDict
+try:
+    from UserDict import UserDict
+except ImportError:
+    from collections import UserDict
+
 from test import mapping_tests
 
 from pytrie import StringTrie
@@ -24,11 +28,11 @@ class BasicTestMappingTrie(mapping_tests.BasicTestMappingProtocol):
 
     def test_values(self):
         d = self._empty_mapping()
-        self.assertEqual(d.values(), [])
+        self.assertEqual(list(d.values()), [])
 
     def test_items(self):
         d = self._empty_mapping()
-        self.assertEqual(d.items(), [])
+        self.assertEqual(list(d.items()), [])
 
 
 class TestMappingTrie(BasicTestMappingTrie, mapping_tests.TestMappingProtocol):
@@ -36,12 +40,12 @@ class TestMappingTrie(BasicTestMappingTrie, mapping_tests.TestMappingProtocol):
     def test_values(self):
         super(TestMappingTrie,self).test_values()
         d = self._full_mapping({'1':2})
-        self.assertEqual(d.values(), [2])
+        self.assertEqual(list(d.values()), [2])
 
     def test_items(self):
         super(TestMappingTrie,self).test_items()
         d = self._full_mapping({'1':2})
-        self.assertEqual(d.items(), [('1',2)])
+        self.assertEqual(list(d.items()), [('1',2)])
 
     def test_clear(self):
         d = self._full_mapping(self.reference)
@@ -57,38 +61,38 @@ class TestMappingTrie(BasicTestMappingTrie, mapping_tests.TestMappingProtocol):
         d.update({"2":20})
         d.update({"1":1, "2":2, "3":3})
         self.assertEqual(d, {"1":1, "2":2, "3":3})
-    
+
         # no argument
         d.update()
         self.assertEqual(d, {"1":1, "2":2, "3":3})
-    
+
         # keyword arguments
         d = self._empty_mapping()
         d.update(x=100)
         d.update(y=20)
         d.update(x=1, y=2, z=3)
         self.assertEqual(d, {"x":1, "y":2, "z":3})
-    
+
         # item sequence
         d = self._empty_mapping()
         d.update([("x", 100), ("y", 20)])
         self.assertEqual(d, {"x":100, "y":20})
-    
+
         # Both item sequence and keyword arguments
         d = self._empty_mapping()
         d.update([("x", 100), ("y", 20)], x=1, y=2)
         self.assertEqual(d, {"x":1, "y":2})
-    
+
         # iterator
         d = self._full_mapping({"1":3, "2":4})
-        d.update(self._full_mapping({"1":2, "3":4, "5":6}).iteritems())
+        d.update(iter(self._full_mapping({"1":2, "3":4, "5":6}).items()))
         self.assertEqual(d, {"1":2, "2":4, "3":4, "5":6})
-    
+
         class SimpleUserDict:
             def __init__(self):
                 self.d = {'1':1, '2':2, '3':3}
             def keys(self):
-                return self.d.keys()
+                return list(self.d.keys())
             def __getitem__(self, i):
                 return self.d[i]
         d.clear()
@@ -98,7 +102,7 @@ class TestMappingTrie(BasicTestMappingTrie, mapping_tests.TestMappingProtocol):
     def test_fromkeys(self):
         self.assertEqual(self.type2test.fromkeys("abc"), {"a":None, "b":None, "c":None})
         d = self._empty_mapping()
-        self.assert_(not(d.fromkeys("abc") is d))
+        self.assertTrue(not(d.fromkeys("abc") is d))
         self.assertEqual(d.fromkeys("abc"), {"a":None, "b":None, "c":None})
         self.assertEqual(d.fromkeys(("4","5"),0), {"4":0, "5":0})
         self.assertEqual(d.fromkeys([]), {})
@@ -108,37 +112,37 @@ class TestMappingTrie(BasicTestMappingTrie, mapping_tests.TestMappingProtocol):
         class dictlike(self.type2test): pass
         self.assertEqual(dictlike.fromkeys("a"), {"a":None})
         self.assertEqual(dictlike().fromkeys("a"), {"a":None})
-        self.assert_(dictlike.fromkeys("a").__class__ is dictlike)
-        self.assert_(dictlike().fromkeys("a").__class__ is dictlike)
-        self.assert_(type(dictlike.fromkeys("a")) is dictlike)
+        self.assertTrue(dictlike.fromkeys("a").__class__ is dictlike)
+        self.assertTrue(dictlike().fromkeys("a").__class__ is dictlike)
+        self.assertTrue(type(dictlike.fromkeys("a")) is dictlike)
         class mydict(self.type2test):
             def __new__(cls):
-                return UserDict.UserDict()
+                return UserDict()
         ud = mydict.fromkeys("ab")
         self.assertEqual(ud, {"a":None, "b":None})
-        self.assert_(isinstance(ud, UserDict.UserDict))
+        self.assertTrue(isinstance(ud, UserDict))
         self.assertRaises(TypeError, dict.fromkeys)
-    
+
         class Exc(Exception): pass
-    
+
         class baddict1(self.type2test):
             def __init__(self):
                 raise Exc()
-    
+
         self.assertRaises(Exc, baddict1.fromkeys, [1])
-    
+
         class BadSeq(object):
             def __iter__(self):
                 return self
-            def next(self):
+            def __next__(self):
                 raise Exc()
-    
+
         self.assertRaises(Exc, self.type2test.fromkeys, BadSeq())
-    
+
         class baddict2(self.type2test):
             def __setitem__(self, key, value):
                 raise Exc()
-    
+
         self.assertRaises(Exc, baddict2.fromkeys, [1])
 
     def test_copy(self):
@@ -150,9 +154,9 @@ class TestMappingTrie(BasicTestMappingTrie, mapping_tests.TestMappingProtocol):
         d2["5"] = 5; self.assertNotEqual(d2, d)
         d = self._empty_mapping()
         self.assertEqual(d.copy(), d)
-        self.assert_(isinstance(d.copy(), d.__class__))
+        self.assertTrue(isinstance(d.copy(), d.__class__))
         self.assertRaises(TypeError, d.copy, None)
-    
+
     def test_pop(self):
         BasicTestMappingTrie.test_pop(self)
         # Tests for pop with specified key
@@ -161,7 +165,7 @@ class TestMappingTrie(BasicTestMappingTrie, mapping_tests.TestMappingProtocol):
         self.assertEqual(d.pop(k, v), v)
         d[k] = v
         self.assertEqual(d.pop(k, 1), v)
-    
+
 
 class TestMappingTrieSubclass(TestMappingTrie):
     class type2test(StringTrie):

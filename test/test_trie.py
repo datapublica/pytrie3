@@ -5,7 +5,7 @@ from pytrie import SortedStringTrie
 class TestTrie(unittest.TestCase):
     def setUp(self):
         self.words = 'an ant all allot alloy aloe are ate be'.split()
-        self.trie = SortedStringTrie(zip(self.words, range(len(self.words))))
+        self.trie = SortedStringTrie(list(zip(self.words, list(range(len(self.words))))))
 
     def test_longest_prefix(self):
         self.assertEqual(self.trie.longest_prefix('antonym'), 'ant')
@@ -56,34 +56,34 @@ class TestTrie(unittest.TestCase):
         self.assertEqual(self.trie.keys('ann'), [])
 
     def test_values_wprefix(self):
-        self.assertEqual(self.trie.values('al'), [2,3,4,5])
-        self.assertEqual(self.trie.values('are'), [6])
-        self.assertEqual(self.trie.values('ann'), [])
+        self.assertEqual(list(self.trie.values('al')), [2,3,4,5])
+        self.assertEqual(list(self.trie.values('are')), [6])
+        self.assertEqual(list(self.trie.values('ann')), [])
 
     def test_items_wprefix(self):
-        self.assertEqual(self.trie.items('al'),
+        self.assertEqual(list(self.trie.items('al')),
                          [('all',2),('allot',3),('alloy',4),('aloe',5)])
-        self.assertEqual(self.trie.items('are'), [('are',6)])
-        self.assertEqual(self.trie.items('ann'), [])
+        self.assertEqual(list(self.trie.items('are')), [('are',6)])
+        self.assertEqual(list(self.trie.items('ann')), [])
 
     def test_consistency_wprefix(self):
         t = self.trie
         for prefix in 'al','are','ann':
-            self.assertEqual(t.items(prefix),
-                             zip(t.keys(prefix), t.values(prefix)))
+            self.assertEqual(list(t.items(prefix)),
+                             list(zip(t.keys(prefix), t.values(prefix))))
 
     def test_pickle(self):
         from pickle import dumps, loads, HIGHEST_PROTOCOL
-        for proto in xrange(HIGHEST_PROTOCOL):
+        for proto in range(HIGHEST_PROTOCOL):
             unpickled = loads(dumps(self.trie, proto))
             self.assertEqual(self.trie, unpickled)
-            self.assert_(type(self.trie) is type(unpickled))
-            self.assert_(self.trie is not unpickled)
+            self.assertTrue(type(self.trie) is type(unpickled))
+            self.assertTrue(self.trie is not unpickled)
 
     def test_repr(self):
         evaled = eval(repr(self.trie))
         self.assertEqual(evaled, self.trie)
         self.assertEqual(evaled.__class__, self.trie.__class__)
 
-if __name__ == "__main__":    
+if __name__ == "__main__":
     unittest.main()
